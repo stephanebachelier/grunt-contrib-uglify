@@ -30,6 +30,9 @@ module.exports = function(grunt) {
 
     // Configuration to be run (and then tested).
     uglify: {
+      options: {
+        extension: '.js'
+      },
       compress: {
         files: {
           'tmp/compress.js': ['test/fixtures/src/simple.js']
