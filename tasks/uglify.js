@@ -45,8 +45,11 @@ module.exports = function(grunt) {
       mangle: {},
       beautify: false,
       report: 'min',
-      expression: false
+      expression: false,
+      extension: '.min.js'
     });
+
+    var extensionReg = new RegExp(options.extension);
 
     // Process banner.
     var banner = normalizeLf(options.banner);
@@ -68,6 +71,12 @@ module.exports = function(grunt) {
       if (src.length === 0) {
         grunt.log.warn('Destination ' + chalk.cyan(f.dest) + ' not written because src files were empty.');
         return;
+      }
+
+      // Add the correct extension if needed to the dest file
+      var dest = f.dest;
+      if (!extensionReg.test(dest)) {
+        dest = dest.replace('.js', options.extension);
       }
 
       // Warn on incompatible options
@@ -93,7 +102,7 @@ module.exports = function(grunt) {
       // dynamically create destination sourcemap name
       if (mapNameGenerator) {
         try {
-          options.generatedSourceMapName = mapNameGenerator(f.dest);
+          options.generatedSourceMapName = mapNameGenerator(dest);
         } catch (e) {
           var err = new Error('SourceMap failed.');
           err.origError = e;
@@ -102,7 +111,7 @@ module.exports = function(grunt) {
       }
       // If no name is passed append .map to the filename
       else if ( !options.sourceMapName ) {
-        options.generatedSourceMapName = f.dest + '.map';
+        options.generatedSourceMapName = dest + '.map';
       } else {
         options.generatedSourceMapName = options.sourceMapName;
       }
@@ -121,7 +130,7 @@ module.exports = function(grunt) {
       // Calculate the path from the dest file to the sourcemap for the
       // sourceMappingURL reference
       if (options.sourceMap) {
-        var destToSourceMapPath = relativePath(f.dest, options.generatedSourceMapName);
+        var destToSourceMapPath = relativePath(dest, options.generatedSourceMapName);
         var sourceMapBasename = path.basename(options.generatedSourceMapName);
         options.destToSourceMap = destToSourceMapPath + sourceMapBasename;
       }
@@ -129,7 +138,7 @@ module.exports = function(grunt) {
       // Minify files, warn and fail on error.
       var result;
       try {
-        result = uglify.minify(src, f.dest, options);
+        result = uglify.minify(src, dest, options);
       } catch (e) {
         console.log(e);
         var err = new Error('Uglification failed.');
@@ -153,7 +162,7 @@ module.exports = function(grunt) {
       }
 
       // Write the destination file.
-      grunt.file.write(f.dest, output);
+      grunt.file.write(dest, output);
 
       // Write source map
       if (options.sourceMap) {
@@ -161,7 +170,7 @@ module.exports = function(grunt) {
         grunt.log.writeln('File ' + chalk.cyan(options.generatedSourceMapName) + ' created (source map).');
       }
 
-      grunt.log.writeln('File ' + chalk.cyan(f.dest) + ' created: ' +
+      grunt.log.writeln('File ' + chalk.cyan(dest) + ' created: ' +
                         maxmin(result.max, output, options.report === 'gzip'));
     });
   });
